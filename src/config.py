@@ -47,7 +47,7 @@ ERROR_MESSAGES = {
 
 # Configuración de la interfaz Streamlit
 STREAMLIT_CONFIG = {
-    'page_title': 'Sistema de Ruteo v2.1',
+    'page_title': 'RutaFácil',
     'page_icon': '🚚',
     'layout': 'wide',
     'initial_sidebar_state': 'expanded'

@@ -30,8 +30,8 @@ if 'solution' not in st.session_state:
     st.session_state.solution = None
 
 # Título principal
-st.title("🚚 Sistema de Ruteo v2.1")
-st.markdown("### Optimización de rutas con múltiples objetivos")
+st.title("🚚 RutaFácil")
+st.markdown("### Planificador inteligente de rutas")
 st.divider()
 
 # Sidebar para configuración
@@ -771,7 +771,7 @@ with tab4:
 st.divider()
 col_footer1, col_footer2 = st.columns([3, 1])
 with col_footer1:
-    st.caption("Sistema de Ruteo v2.0 - Optimización de rutas con múltiples orígenes y geocodificación automática")
+    st.caption("RutaFácil - Planificador inteligente de rutas con múltiples orígenes y geocodificación automática")
 with col_footer2:
     if st.button("🔄 Reiniciar Sesión"):
         for key in list(st.session_state.keys()):
