@@ -116,144 +116,7 @@ if 'data_loader' not in st.session_state or ('current_geocoding_state' in st.ses
     st.session_state.current_geocoding_state = current_geocoding_state
 
 with st.sidebar:
-    # Sección de descarga de plantillas
-    st.header("📥 Plantillas de Excel")
-    st.caption("Descarga las plantillas y llénalas con tus datos")
-
-    # Crear columnas para los botones
-    col_p1, col_p2 = st.columns(2)
-
-    with col_p1:
-        # Plantilla de Orígenes
-        try:
-            with open("templates/plantilla_origenes.xlsx", "rb") as file:
-                st.download_button(
-                    label="📍 Orígenes",
-                    data=file,
-                    file_name="plantilla_origenes.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    help="Centros de distribución o bodegas"
-                )
-        except FileNotFoundError:
-            st.warning("⚠️ Plantilla no encontrada")
-
-        # Plantilla de Flota
-        try:
-            with open("templates/plantilla_vehiculos.xlsx", "rb") as file:
-                st.download_button(
-                    label="🚚 Vehículos",
-                    data=file,
-                    file_name="plantilla_vehiculos.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    help="Flota de vehículos disponibles"
-                )
-        except FileNotFoundError:
-            st.warning("⚠️ Plantilla no encontrada")
-
-    with col_p2:
-        # Plantilla de Destinos
-        try:
-            with open("templates/plantilla_destinos.xlsx", "rb") as file:
-                st.download_button(
-                    label="📦 Destinos",
-                    data=file,
-                    file_name="plantilla_destinos.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    help="Clientes o puntos de entrega"
-                )
-        except FileNotFoundError:
-            st.warning("⚠️ Plantilla no encontrada")
-
-        # Plantilla de Configuración
-        try:
-            with open("templates/plantilla_configuracion.xlsx", "rb") as file:
-                st.download_button(
-                    label="⚙️ Configuración",
-                    data=file,
-                    file_name="plantilla_configuracion.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    help="Parámetros personalizados (opcional)"
-                )
-        except FileNotFoundError:
-            st.warning("⚠️ Plantilla no encontrada")
-
-    st.info("💡 Las plantillas incluyen ejemplos y columnas requeridas")
-
-    # Expander con información detallada
-    with st.expander("📖 ¿Qué información debo incluir en cada plantilla?"):
-        st.markdown("""
-        ### 📍 **Plantilla de Orígenes**
-        Define tus centros de distribución, bodegas o puntos de despacho.
-
-        **Columnas obligatorias:**
-        - `origen_id`: Identificador único (ej: BODEGA_01)
-        - `nombre_origen`: Nombre descriptivo
-        - `direccion`: Dirección completa
-        - `ciudad`: Ciudad
-        - `pais`: País
-
-        **Columnas opcionales:**
-        - `latitud` / `longitud`: Coordenadas (se geocodifica automáticamente si están vacías)
-        - `hora_apertura` / `hora_cierre`: Horario de operación
-
-        ---
-
-        ### 📦 **Plantilla de Destinos**
-        Define tus clientes, puntos de entrega o pedidos.
-
-        **Columnas obligatorias:**
-        - `destino_id`: Identificador único (ej: CLIENTE_001)
-        - `nombre_cliente`: Nombre del cliente/punto
-        - `direccion`: Dirección completa
-        - `ciudad`: Ciudad
-        - `pais`: País
-        - `demanda`: Cantidad a entregar (en kg, unidades, etc.)
-
-        **Columnas opcionales:**
-        - `latitud` / `longitud`: Coordenadas (se geocodifica automáticamente si están vacías)
-        - `hora_inicio` / `hora_fin`: Ventana horaria de entrega
-        - `prioridad`: 1 (Alta), 2 (Media), 3 (Baja)
-
-        ---
-
-        ### 🚚 **Plantilla de Vehículos**
-        Define tu flota disponible.
-
-        **Columnas obligatorias:**
-        - `vehiculo_id`: Identificador único (ej: CAMION_01)
-        - `capacidad`: Capacidad máxima (mismas unidades que demanda)
-        - `origen_id`: Desde qué origen parte este vehículo
-
-        **Columnas opcionales:**
-        - `tipo_vehiculo`: Descripción (ej: Camión 3.5T, Van)
-        - `costo_km`: Costo operativo por kilómetro
-        - `hora_inicio` / `hora_fin`: Horario de disponibilidad
-
-        ---
-
-        ### ⚙️ **Plantilla de Configuración (Opcional)**
-        Personaliza parámetros del sistema.
-
-        **Columnas:**
-        - `parametro`: Nombre del parámetro
-        - `valor`: Valor a configurar
-        - `descripcion`: Explicación del parámetro
-
-        **Parámetros comunes:**
-        - `unidad_demanda`: kg, unidades, cajas, etc.
-        - `tiempo_servicio_min`: Minutos por parada (default: 10)
-        - `max_destinos_por_ruta`: Máximo de paradas por ruta
-        """)
-
-        st.success("✅ Las columnas con latitud/longitud vacías se geocodificarán automáticamente usando el método seleccionado")
-
-    st.divider()
-
-    # Indicador de progreso de carga
+    # Sección de carga de archivos
     st.header("📤 Carga de Archivos")
 
     # Contador de archivos cargados
@@ -263,6 +126,20 @@ with st.sidebar:
     st.subheader("1. Orígenes" + (" ✅" if 'origenes' in st.session_state and st.session_state.origenes else ""))
     st.caption(TEMPLATE_INFO['origenes']['descripcion'])
     st.caption(f"🔍 {TEMPLATE_INFO['origenes']['nota']}")
+
+    # Botón de descarga de plantilla
+    try:
+        with open("templates/plantilla_origenes.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Descargar Plantilla de Orígenes",
+                data=file,
+                file_name="plantilla_origenes.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Descarga la plantilla con ejemplos y columnas requeridas"
+            )
+    except FileNotFoundError:
+        st.warning("⚠️ Plantilla no encontrada")
+
     file_origenes = st.file_uploader(
         "Archivo de Orígenes (Excel)",
         type=['xlsx', 'xls'],
@@ -275,6 +152,20 @@ with st.sidebar:
     st.subheader("2. Destinos/Clientes" + (" ✅" if 'destinos' in st.session_state and st.session_state.destinos else ""))
     st.caption(TEMPLATE_INFO['destinos']['descripcion'])
     st.caption(f"🔍 {TEMPLATE_INFO['destinos']['nota']}")
+
+    # Botón de descarga de plantilla
+    try:
+        with open("templates/plantilla_destinos.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Descargar Plantilla de Destinos",
+                data=file,
+                file_name="plantilla_destinos.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Descarga la plantilla con ejemplos y columnas requeridas"
+            )
+    except FileNotFoundError:
+        st.warning("⚠️ Plantilla no encontrada")
+
     file_destinos = st.file_uploader(
         "Archivo de Destinos (Excel)",
         type=['xlsx', 'xls'],
@@ -287,6 +178,20 @@ with st.sidebar:
     st.subheader("3. Flota/Vehículos" + (" ✅" if 'flota' in st.session_state and st.session_state.flota else ""))
     st.caption(TEMPLATE_INFO['flota']['descripcion'])
     st.caption(f"🔍 {TEMPLATE_INFO['flota']['nota']}")
+
+    # Botón de descarga de plantilla
+    try:
+        with open("templates/plantilla_vehiculos.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Descargar Plantilla de Vehículos",
+                data=file,
+                file_name="plantilla_vehiculos.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Descarga la plantilla con ejemplos y columnas requeridas"
+            )
+    except FileNotFoundError:
+        st.warning("⚠️ Plantilla no encontrada")
+
     file_flota = st.file_uploader(
         "Archivo de Flota (Excel)",
         type=['xlsx', 'xls'],
@@ -298,6 +203,20 @@ with st.sidebar:
 
     st.subheader("4. Configuración (Opcional)" + (" ✅" if 'config' in st.session_state and st.session_state.config else ""))
     st.caption(TEMPLATE_INFO['config']['descripcion'])
+
+    # Botón de descarga de plantilla
+    try:
+        with open("templates/plantilla_configuracion.xlsx", "rb") as file:
+            st.download_button(
+                label="📥 Descargar Plantilla de Configuración",
+                data=file,
+                file_name="plantilla_configuracion.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                help="Descarga la plantilla con parámetros opcionales"
+            )
+    except FileNotFoundError:
+        st.warning("⚠️ Plantilla no encontrada")
+
     file_config = st.file_uploader(
         "Archivo de Configuración (Excel)",
         type=['xlsx', 'xls'],
@@ -326,6 +245,7 @@ with st.sidebar:
         options=list(OPTIMIZATION_TYPES.keys()),
         format_func=lambda x: f"{OPTIMIZATION_TYPES[x]['nombre']} - {OPTIMIZATION_TYPES[x]['objetivo']}",
         index=0,
+        key='tipo_optimizacion',
         help="Selecciona el criterio principal para optimizar las rutas"
     )
 
@@ -582,7 +502,7 @@ with tab3:
                         st.session_state.data_loader.destinos,
                         st.session_state.data_loader.flota,
                         config,
-                        optimization_type=tipo_optimizacion,
+                        optimization_type=st.session_state.get('tipo_optimizacion', 'balanced'),
                         distance_method=metodo_distancia,
                         google_api_key_directions=google_api_key_directions
                     )
