@@ -56,7 +56,6 @@ Optimiza entregas con múltiples orígenes, objetivos flexibles y geocodificaci�
 
 ### 📊 Visualización y Exportación
 - **Mapas interactivos**: Visualiza rutas con colores por vehículo
-- **Prioridades de clientes**: Alta, media, baja
 - **Exportación Excel**: Resultados detallados por vehículo
 - **Métricas en tiempo real**: Distancia, utilización, costos
 
@@ -161,7 +160,7 @@ En la pestaña **"📊 Datos"**:
 #### 5️⃣ Visualizar Ubicaciones
 En la pestaña **"🗺️ Visualización"**:
 - Ve todos los puntos en el mapa
-- Orígenes en verde, destinos por prioridad
+- Orígenes en naranja, destinos en azul
 - Verifica que las ubicaciones sean correctas
 
 #### 6️⃣ Optimizar y Exportar
@@ -284,7 +283,6 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 | `demanda` | Número | ✅ Sí | Cantidad a entregar |
 | `latitud` | Número | ❌ No | Se geocodifica si está vacía |
 | `longitud` | Número | ❌ No | Se geocodifica si está vacía |
-| `prioridad` | 1/2/3 | ❌ No | 1=Alta, 2=Media, 3=Baja |
 | `hora_inicio` | Hora | ❌ No | Inicio ventana horaria |
 | `hora_fin` | Hora | ❌ No | Fin ventana horaria |
 
@@ -388,7 +386,6 @@ sistema-ruteo/
 - [x] 5 objetivos de optimización
 - [x] Geocodificación con Google Maps y Nominatim
 - [x] Distancias reales por carretera (Google Directions)
-- [x] Prioridades de clientes
 - [x] Interfaz intuitiva con Streamlit
 - [x] Exportación a Excel detallada
 

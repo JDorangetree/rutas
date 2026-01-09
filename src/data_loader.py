@@ -214,7 +214,7 @@ class DataLoader:
         """
         Carga archivo de destinos/clientes (puntos de entrega, pedidos)
         Columnas requeridas: destino_id, nombre_cliente, direccion, ciudad, pais, demanda
-        Columnas opcionales: latitud, longitud, hora_inicio, hora_fin, prioridad
+        Columnas opcionales: latitud, longitud, hora_inicio, hora_fin
         """
         try:
             df = pd.read_excel(file)
@@ -234,8 +234,6 @@ class DataLoader:
                 df['hora_inicio'] = '00:00'
             if 'hora_fin' not in df.columns:
                 df['hora_fin'] = '23:59'
-            if 'prioridad' not in df.columns:
-                df['prioridad'] = 2  # Prioridad media por defecto
 
             # Geocodificar direcciones sin coordenadas
             needs_geocoding = df['latitud'].isnull() | df['longitud'].isnull()
@@ -378,8 +376,7 @@ class DataLoader:
             summary['destinos'] = {
                 'cantidad': len(self.destinos),
                 'demanda_total': self.destinos['demanda'].sum(),
-                'ciudades': self.destinos['ciudad'].unique().tolist(),
-                'prioridades': self.destinos['prioridad'].value_counts().to_dict()
+                'ciudades': self.destinos['ciudad'].unique().tolist()
             }
 
         if self.flota is not None:

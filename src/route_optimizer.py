@@ -511,8 +511,7 @@ class RouteOptimizer:
                         'ciudad': dest_row['ciudad'],
                         'latitud': dest_row['latitud'],
                         'longitud': dest_row['longitud'],
-                        'demanda': dest_row['demanda'],
-                        'prioridad': dest_row.get('prioridad', 2)
+                        'demanda': dest_row['demanda']
                     }
 
                 route.append(location_info)

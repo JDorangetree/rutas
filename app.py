@@ -221,8 +221,10 @@ with st.sidebar:
         "Archivo de Configuración (Excel)",
         type=['xlsx', 'xls'],
         key='config',
-        help="Parámetros personalizados de optimización"
+        help="Parámetros técnicos opcionales. NOTA: El tipo de optimización se configura desde 'Objetivo de Optimización' más abajo, no desde este archivo."
     )
+
+    st.caption("💡 Este archivo solo configura parámetros técnicos (unidades, velocidades, etc.). El tipo de optimización se elige más abajo en '⚙️ Parámetros'")
 
     # Mostrar progreso
     st.divider()
@@ -444,21 +446,16 @@ with tab2:
                 icon=folium.Icon(color='green', icon='home', prefix='fa')
             ).add_to(m)
 
-        # Agregar destinos con color según prioridad
-        priority_colors = {1: 'red', 2: 'orange', 3: 'lightblue'}
+        # Agregar destinos
         for _, row in st.session_state.data_loader.destinos.iterrows():
-            priority = row.get('prioridad', 2)
-            color = priority_colors.get(priority, 'blue')
-
             folium.Marker(
                 location=[row['latitud'], row['longitud']],
                 popup=f"<b>{row['nombre_cliente']}</b><br>"
                       f"ID: {row['destino_id']}<br>"
                       f"Ciudad: {row['ciudad']}<br>"
-                      f"Demanda: {row['demanda']}<br>"
-                      f"Prioridad: {priority}",
+                      f"Demanda: {row['demanda']}",
                 tooltip=f"{row['nombre_cliente']} (Demanda: {row['demanda']})",
-                icon=folium.Icon(color=color, icon='shopping-cart', prefix='fa')
+                icon=folium.Icon(color='blue', icon='shopping-cart', prefix='fa')
             ).add_to(m)
 
         st_folium(m, width=1200, height=600)
@@ -467,9 +464,7 @@ with tab2:
         st.markdown("""
         **Leyenda:**
         - 🏠 Verde: Orígenes/Depósitos
-        - 🛒 Rojo: Destinos Prioridad Alta (1)
-        - 🛒 Naranja: Destinos Prioridad Media (2)
-        - 🛒 Azul claro: Destinos Prioridad Baja (3)
+        - 🛒 Azul: Destinos de entrega
         """)
 
     else:
@@ -485,7 +480,10 @@ with tab3:
         with col1:
             st.subheader("Configuración")
             st.write(f"⏱️ Tiempo límite: {tiempo_limite}s")
-            st.write("🎯 Objetivo: Minimizar distancia total")
+            # Mostrar objetivo seleccionado dinámicamente
+            tipo_opt_seleccionado = st.session_state.get('tipo_optimizacion', 'balanced')
+            objetivo_texto = OPTIMIZATION_TYPES[tipo_opt_seleccionado]['objetivo']
+            st.write(f"🎯 Objetivo: {objetivo_texto}")
             st.write(f"🚚 Múltiples orígenes: Sí")
 
             # Mostrar resumen de capacidades

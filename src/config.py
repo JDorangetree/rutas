@@ -4,13 +4,14 @@ Versión 2.0 - Soporta múltiples orígenes y geocodificación
 """
 
 # Configuración por defecto
+# Nota: El tipo de optimización se configura exclusivamente desde la interfaz, no desde el archivo Excel
 DEFAULT_CONFIG = {
     'unidad_demanda': 'kg',
     'tiempo_servicio_min': 10,
     'max_destinos_por_ruta': 15,
-    'optimizar_por': 'distancia',
-    'tiempo_limite_optimizacion': 60,
     'usar_ventanas_horarias': 'no',
+    'velocidad_promedio_kmh': 40,
+    'costo_km_default': 1.5,
     'radio_tierra_km': 6371,
     'decimales_distancia': 2,
     'color_origen': 'green',
@@ -27,7 +28,7 @@ REQUIRED_COLUMNS = {
 
 OPTIONAL_COLUMNS = {
     'origenes': ['latitud', 'longitud', 'hora_apertura', 'hora_cierre'],
-    'destinos': ['latitud', 'longitud', 'hora_inicio', 'hora_fin', 'prioridad'],
+    'destinos': ['latitud', 'longitud', 'hora_inicio', 'hora_fin'],
     'flota': ['tipo_vehiculo', 'costo_km', 'hora_inicio', 'hora_fin']
 }
 
@@ -77,18 +78,12 @@ TEMPLATE_INFO = {
         'nota': 'Cada vehículo debe asociarse a un origen_id válido'
     },
     'config': {
-        'descripcion': 'Parámetros de configuración (opcional)',
-        'ejemplo': 'unidad_demanda: kg, tiempo_limite_optimizacion: 60',
+        'descripcion': 'Parámetros técnicos opcionales (NO incluye tipo de optimización)',
+        'ejemplo': 'unidad_demanda: kg, tiempo_servicio_min: 10, velocidad_promedio_kmh: 40',
         'columnas': ['parametro', 'valor', 'descripcion'],
-        'parametros_disponibles': list(DEFAULT_CONFIG.keys())
+        'parametros_disponibles': list(DEFAULT_CONFIG.keys()),
+        'nota': 'El tipo de optimización se configura desde la interfaz, no desde este archivo'
     }
-}
-
-# Prioridades de clientes
-PRIORITY_LEVELS = {
-    1: 'Alta',
-    2: 'Media',
-    3: 'Baja'
 }
 
 # Tipos de optimización

@@ -31,12 +31,24 @@ Esta guía te ayudará a configurar la API de Google Maps para obtener geocodifi
 3. Nombre del proyecto: `Sistema de Ruteo` (o el que prefieras)
 4. Clic en "Crear"
 
-### 3. Habilitar la API de Geocodificación
+### 3. Habilitar las APIs Necesarias
+
+**RutaFácil usa dos APIs de Google Maps:**
+
+#### A. Geocoding API (Convierte direcciones en coordenadas)
 
 1. En el menú lateral, ve a **"APIs y servicios" → "Biblioteca"**
 2. Busca: `Geocoding API`
 3. Haz clic en "Geocoding API"
 4. Clic en el botón **"HABILITAR"**
+
+#### B. Distance Matrix API (Calcula distancias reales por carretera)
+
+1. En la misma "Biblioteca", busca: `Distance Matrix API`
+2. Haz clic en "Distance Matrix API"
+3. Clic en el botón **"HABILITAR"**
+
+**⚠️ IMPORTANTE:** Si no habilitas Distance Matrix API y intentas usar "Google Directions" para calcular distancias, verás un error `REQUEST_DENIED`. En ese caso, la app usará automáticamente el método Haversine (línea recta) como alternativa.
 
 ### 4. Crear Credenciales (API Key)
 
@@ -52,14 +64,18 @@ Para mayor seguridad:
 
 1. En la lista de credenciales, haz clic en tu API key
 2. En "Restricciones de aplicación":
-   - Selecciona "Direcciones IP"
-   - Agrega tu IP (o usa `0.0.0.0/0` para desarrollo)
+   - Para desarrollo local: Selecciona "Ninguna"
+   - Para producción: Selecciona "Referentes HTTP" y agrega tu dominio
 
 3. En "Restricciones de API":
    - Selecciona "Restringir clave"
-   - Marca solo: **Geocoding API**
+   - Marca **ambas APIs**:
+     - ✅ **Geocoding API**
+     - ✅ **Distance Matrix API**
 
 4. Guarda los cambios
+
+**Nota:** Si solo marcas Geocoding API, el cálculo de distancias reales no funcionará.
 
 ### 6. Configurar Facturación (Requerido)
 
@@ -136,23 +152,54 @@ Tienes **dos opciones** para configurar tu API key:
 
 ## Solución de Problemas
 
-### Error: "API key not valid"
-- Verifica que copiaste la API key completa
-- Verifica que habilitaste la "Geocoding API"
-- Espera unos minutos (las APIs pueden tardar en activarse)
+### Error: "REQUEST_DENIED - You're calling a legacy API"
 
-### Error: "This API project is not authorized to use this API"
-- Asegúrate de habilitar la "Geocoding API" en tu proyecto
+**Síntoma:** Al intentar calcular distancias reales con Google Directions, aparece:
+```
+Error: REQUEST_DENIED (You're calling a legacy API, which is not enabled for your project...)
+```
+
+**Solución:**
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Asegúrate de estar en el proyecto correcto
+3. Ve a **"APIs y servicios" → "Biblioteca"**
+4. Busca y habilita: **"Distance Matrix API"** (no "Directions API")
+5. Espera 2-3 minutos para que se propague
+6. Reinicia la aplicación
+
+**Alternativa temporal:** Usa el método "Haversine (Línea recta)" para calcular distancias mientras tanto.
+
+### Error: "API key not valid"
+- Verifica que copiaste la API key completa (sin espacios)
+- Verifica que habilitaste ambas APIs: **Geocoding API** y **Distance Matrix API**
+- Espera 2-5 minutos (las APIs nuevas tardan en activarse)
 - Verifica que la facturación esté configurada
 
+### Error: "This API project is not authorized to use this API"
+- Asegúrate de habilitar las APIs correctas en tu proyecto:
+  - ✅ Geocoding API (para direcciones → coordenadas)
+  - ✅ Distance Matrix API (para distancias reales)
+- Verifica que la facturación esté activa
+
 ### Error: "You have exceeded your daily request quota"
-- Superaste los créditos gratuitos mensuales
-- Ve a Google Cloud Console para ver tu uso
-- Considera optimizar (cachear coordenadas ya geocodificadas)
+- Superaste los $200 USD de crédito gratuito mensual
+- Ve a Google Cloud Console → Facturación para ver tu uso
+- Soluciones:
+  - Usa coordenadas directamente (latitud/longitud) en lugar de direcciones
+  - Usa método Haversine en lugar de Google Directions
+  - Configura un límite de presupuesto
+
+### Las distancias parecen incorrectas
+- Si usas **Haversine**: Las distancias son en línea recta, no por carretera
+- Si usas **Google Directions**:
+  - Verifica que Distance Matrix API esté habilitada
+  - Verifica que ingresaste la API key correcta
+  - Revisa que la facturación esté configurada
 
 ### No se ve el mensaje de Google Maps
 - Verifica que el archivo `.env` esté en la raíz del proyecto
 - Verifica que no haya espacios antes o después de la API key
+- Formato correcto: `GOOGLE_MAPS_API_KEY=AIzaSy...` (sin comillas)
 - Reinstala las dependencias: `pip install -r requirements.txt`
 
 ## Monitoreo de Uso
@@ -195,8 +242,31 @@ Para uso ocasional o con pocas direcciones, Nominatim es suficiente.
 
 ---
 
-¿Problemas? Revisa que:
-1. ✅ La API key esté en el archivo `.env`
-2. ✅ Habilitaste "Geocoding API"
-3. ✅ Configuraste facturación
-4. ✅ Reinstalaste dependencias: `pip install -r requirements.txt`
+## 📝 Checklist de Configuración
+
+Para que RutaFácil funcione completamente con Google Maps, verifica:
+
+### APIs Habilitadas:
+- [ ] **Geocoding API** - Para convertir direcciones en coordenadas
+- [ ] **Distance Matrix API** - Para calcular distancias reales por carretera
+
+### Configuración:
+- [ ] API Key creada y copiada
+- [ ] Facturación configurada (tarjeta agregada)
+- [ ] API Key ingresada en la app o en archivo `.env`
+- [ ] (Opcional) Restricciones de API configuradas
+
+### Verificación:
+- [ ] Probaste geocodificación con una dirección
+- [ ] Probaste cálculo de distancias (si usas Google Directions)
+- [ ] Configuraste alertas de presupuesto
+
+---
+
+**¿Problemas?** Revisa que:
+1. ✅ **Ambas APIs** estén habilitadas (Geocoding + Distance Matrix)
+2. ✅ La API key esté correctamente ingresada
+3. ✅ La facturación esté activa
+4. ✅ Esperaste 2-3 minutos después de habilitar las APIs
+
+**Error REQUEST_DENIED?** → Necesitas habilitar **Distance Matrix API** específicamente
