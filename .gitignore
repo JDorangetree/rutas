@@ -42,3 +42,6 @@ output/*
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Archivos de notas personales (solo locales)
+RESUMEN_PARA_SUBIR.md
