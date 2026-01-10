@@ -33,8 +33,11 @@ En el **panel lateral izquierdo** verás la sección "📤 Carga de Archivos". P
 **Columnas principales:**
 - `origen_id`: Identificador único (ej: BODEGA_01)
 - `nombre_origen`: Nombre de la bodega
-- `direccion`, `ciudad`, `pais`: Ubicación completa
+- `direccion`: Dirección completa (ej: Calle 80 #70-15 o Cl 80 # 70-15)
+- `ciudad`, `pais`: Ciudad y país
 - `latitud`, `longitud`: (Opcional, se calculan automáticamente si no los incluyes)
+
+✨ **Nuevo:** El sistema estandariza direcciones colombianas automáticamente (Cl→Calle, Cr→Carrera, etc.)
 
 #### 1.2 Destinos (Clientes/Puntos de Entrega)
 - Haz clic en **"📥 Descargar Plantilla de Destinos"**
@@ -43,8 +46,13 @@ En el **panel lateral izquierdo** verás la sección "📤 Carga de Archivos". P
 **Columnas principales:**
 - `destino_id`: Identificador único (ej: CLIENTE_001)
 - `nombre_cliente`: Nombre del cliente
-- `direccion`, `ciudad`, `pais`: Ubicación completa
+- `direccion`: Dirección completa (ej: Cr 45 #50-20 o Carrera 45 #50-20)
+- `ciudad`, `pais`: Ciudad y país
 - `demanda`: Cantidad a entregar (kg, unidades, cajas, etc.)
+
+✨ **Nuevo:** El sistema estandariza direcciones colombianas automáticamente (Cl→Calle, Cr→Carrera, etc.)
+
+🔒 **Límites de seguridad:** Máximo 500 destinos y 5MB por archivo
 
 #### 1.3 Vehículos (Flota)
 - Haz clic en **"📥 Descargar Plantilla de Vehículos"**
@@ -66,10 +74,20 @@ Una vez que hayas llenado las plantillas:
 
 1. En cada sección (1. Orígenes, 2. Destinos, 3. Vehículos), haz clic en el botón de carga de archivos
 2. Selecciona el archivo Excel correspondiente
-3. Verás un **✅ verde** al lado del título cuando el archivo se cargue correctamente
-4. El contador en la parte inferior mostrará tu progreso (ej: "Archivos cargados: 3/3")
+3. El sistema validará automáticamente tu archivo:
+   - ✅ **Validaciones de seguridad**: Tamaño máximo 5MB, máximo 500 filas
+   - 🔍 **Validación de direcciones**: Estandarización automática de formatos colombianos
+   - 🚫 **Detección de fórmulas**: Bloquea archivos con fórmulas Excel maliciosas
+4. Verás un **✅ verde** al lado del título cuando el archivo se cargue correctamente
+5. El contador en la parte inferior mostrará tu progreso (ej: "Archivos cargados: 3/3")
 
 ⚠️ **Archivo opcional:** La plantilla de "Configuración" es opcional y solo necesaria si quieres personalizar parámetros avanzados.
+
+💡 **Sobre la validación de direcciones:**
+- El sistema estandariza abreviaciones: Cl→Calle, Cr→Carrera, Av→Avenida
+- Elimina redundancias (si pones "Medellin" en dirección Y en ciudad)
+- Formato estandarizado: `[Tipo vía] [Núm] #[Núm]-[Complemento]`
+- Verás un resumen de los cambios realizados
 
 ---
 
@@ -121,6 +139,38 @@ Una vez completada la optimización, explora las pestañas:
 - **Detalle por vehículo:** Lista de paradas ordenadas
 - **Botón de exportación:** Descarga el plan completo en Excel
 
+#### 4.3 Entender el Archivo Excel Exportado ✨ MEJORADO
+
+El archivo Excel descargado incluye varias hojas:
+
+**Hoja "Resumen":**
+- Métricas generales de la optimización
+- Total de distancia, tiempo, vehículos usados
+- Utilización promedio de flota
+
+**Hojas "Ruta Vehículo X":**
+Cada vehículo tiene una hoja con sus paradas ordenadas:
+
+| Columna | Descripción |
+|---------|-------------|
+| Orden | Secuencia de visita (1, 2, 3...) |
+| Tipo | origen o destino |
+| ID | Identificador del punto |
+| Nombre | Nombre del origen/cliente |
+| Ciudad | Ciudad |
+| **Direccion** | 🆕 Tu entrada original |
+| **Direccion_Geocodificada** | 🆕 Versión estandarizada usada |
+| Latitud / Longitud | Coordenadas |
+| Demanda | Cantidad a entregar |
+
+**Nueva característica:**
+- **Direccion**: Muestra exactamente lo que ingresaste
+- **Direccion_Geocodificada**: Versión estandarizada que se usó para geocodificación
+- Esto te permite verificar cómo se interpretaron tus direcciones
+
+**Hoja "Destinos no Asignados":**
+Si algún destino no pudo ser asignado (falta de capacidad), aparece aquí.
+
 ---
 
 ## ⚙️ Opciones Avanzadas
@@ -157,16 +207,40 @@ Cómo se calculan las distancias entre puntos:
   - ⚠️ Requiere API key y tiene costos
   - 📌 **Recomendado para:** Planificación precisa de producción
 
+### 🚦 Opciones de Tráfico (Avanzado) ✨ NUEVO
+
+Si usas Google Directions API, puedes considerar tráfico en tus rutas:
+
+**📍 Tráfico Actual:**
+- Considera condiciones de tráfico en tiempo real (ahora mismo)
+- Ideal para planificación de entregas inmediatas
+- 💰 Costo: Duplica los requests de Google API
+
+**📅 Tráfico Predictivo:**
+- Simula condiciones de tráfico en una hora específica del día
+- Elige la hora de inicio de rutas (ej: 8:00 AM)
+- Selecciona modelo de tráfico:
+  - **Mejor estimación** (recomendado): Balance entre optimista y pesimista
+  - **Optimista**: Condiciones favorables
+  - **Pesimista**: Considera peor escenario
+- Ideal para planificar rutas para mañana o días futuros
+- 💰 Costo: Duplica los requests de Google API
+
+⚠️ **Importante:** El tráfico aumenta significativamente los costos de API. Usa solo cuando sea necesario para máxima precisión.
+
 ---
 
 ## 💡 Consejos para Mejores Resultados
 
-### 1. Direcciones Completas
-Mientras más detalle, mejor será la geocodificación:
-- ✅ **BIEN:** "Calle 45 #23-15, Chapinero, Bogotá, Colombia"
-- ✅ **BIEN:** "Carrera 7 #32-16, Local 3, Medellín, Antioquia"
-- ❌ **MAL:** "Centro"
-- ❌ **MAL:** "Bogotá"
+### 1. Direcciones Completas ✨ MEJORADO
+El sistema ahora estandariza direcciones colombianas automáticamente. Puedes usar abreviaciones:
+- ✅ **BIEN:** "Calle 45 #23-15" o "Cl 45 # 23-15" → Ambos funcionan
+- ✅ **BIEN:** "Carrera 7 #32-16" o "Cr 7 n 32 16" → Se estandarizan automáticamente
+- ✅ **BIEN:** "Av Eldorado # 69D-25" → Direcciones con nombres de vías
+- ⚠️ **EVITA:** Repetir ciudad en dirección si ya está en columna ciudad
+  - Incorrecto: "Cl 80 # 70-15, Medellin" (cuando ciudad="Medellin")
+  - Correcto: "Cl 80 # 70-15" (el sistema elimina redundancias automáticamente)
+- ❌ **MAL:** "Centro" o "Bogotá" (muy vago)
 
 ### 2. Capacidades Realistas
 - Asegúrate que la **suma de capacidades** de tus vehículos sea **mayor o igual** a la **suma de demandas**
@@ -200,6 +274,23 @@ Mientras más detalle, mejor será la geocodificación:
 - Verifica que sea un archivo `.xlsx` (Excel)
 - Asegúrate que tenga las columnas requeridas con los nombres exactos
 - Descarga la plantilla nuevamente y copia tus datos ahí
+
+### "Archivo muy grande" o "Demasiadas filas" 🔒 NUEVO
+✅ **Límites de seguridad:**
+- Tamaño máximo: **5 MB** por archivo
+- Máximo de filas: **500 destinos**
+- Estos límites protegen contra uso excesivo de API y costos elevados
+
+**Si necesitas más:**
+- Divide tus destinos en múltiples optimizaciones
+- Considera instalar RutaFácil en tu propio servidor
+
+### "Fórmula detectada en Excel" 🔒 NUEVO
+✅ **Solución:**
+- El sistema bloquea archivos con fórmulas Excel por seguridad
+- Copia tus datos y pégalos como **valores** (no fórmulas)
+- En Excel: Copiar → Pegado Especial → Valores
+- Las fórmulas como `=SUMA()`, `=WEBSERVICE()` no están permitidas
 
 ### "No se encontró solución"
 ✅ **Soluciones:**
