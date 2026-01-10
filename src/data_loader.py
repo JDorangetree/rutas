@@ -10,6 +10,7 @@ from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 import time
 import os
 from dotenv import load_dotenv
+from security import validate_and_sanitize_file, SecurityError
 
 # Cargar variables de entorno
 load_dotenv()
@@ -148,6 +149,10 @@ class DataLoader:
         """
         try:
             df = pd.read_excel(file)
+
+            # SEGURIDAD: Validar y sanitizar archivo
+            df = validate_and_sanitize_file(file, df, "orígenes")
+
             required_columns = ['origen_id', 'nombre_origen', 'direccion', 'ciudad', 'pais']
 
             # Validar columnas requeridas
@@ -206,6 +211,10 @@ class DataLoader:
             self.origenes = df
             return df
 
+        except SecurityError as e:
+            # Error de seguridad - mostrar mensaje específico
+            st.error(str(e))
+            return None
         except Exception as e:
             st.error(f"Error al cargar archivo de orígenes: {str(e)}")
             return None
@@ -218,6 +227,10 @@ class DataLoader:
         """
         try:
             df = pd.read_excel(file)
+
+            # SEGURIDAD: Validar y sanitizar archivo
+            df = validate_and_sanitize_file(file, df, "destinos")
+
             required_columns = ['destino_id', 'nombre_cliente', 'direccion', 'ciudad', 'pais', 'demanda']
 
             # Validar columnas requeridas
@@ -280,6 +293,9 @@ class DataLoader:
             self.destinos = df
             return df
 
+        except SecurityError as e:
+            st.error(str(e))
+            return None
         except Exception as e:
             st.error(f"Error al cargar archivo de destinos: {str(e)}")
             return None
@@ -292,6 +308,10 @@ class DataLoader:
         """
         try:
             df = pd.read_excel(file)
+
+            # SEGURIDAD: Validar y sanitizar archivo
+            df = validate_and_sanitize_file(file, df, "flota")
+
             required_columns = ['vehiculo_id', 'capacidad', 'origen_id']
 
             # Validar columnas requeridas
@@ -319,6 +339,9 @@ class DataLoader:
             self.flota = df
             return df
 
+        except SecurityError as e:
+            st.error(str(e))
+            return None
         except Exception as e:
             st.error(f"Error al cargar archivo de flota: {str(e)}")
             return None
@@ -331,6 +354,9 @@ class DataLoader:
         try:
             df = pd.read_excel(file)
 
+            # SEGURIDAD: Validar y sanitizar archivo
+            df = validate_and_sanitize_file(file, df, "configuración")
+
             if 'parametro' not in df.columns or 'valor' not in df.columns:
                 raise ValueError("El archivo debe tener columnas 'parametro' y 'valor'")
 
@@ -340,6 +366,9 @@ class DataLoader:
             self.config = config_dict
             return config_dict
 
+        except SecurityError as e:
+            st.error(str(e))
+            return None
         except Exception as e:
             st.error(f"Error al cargar archivo de configuración: {str(e)}")
             return None

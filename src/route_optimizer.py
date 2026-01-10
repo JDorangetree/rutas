@@ -24,7 +24,8 @@ class RouteOptimizer:
 
     def __init__(self, origenes: pd.DataFrame, destinos: pd.DataFrame, flota: pd.DataFrame,
                  config: Dict = None, optimization_type: str = 'distancia',
-                 distance_method: str = 'haversine', google_api_key_directions: Optional[str] = None):
+                 distance_method: str = 'haversine', google_api_key_directions: Optional[str] = None,
+                 considerar_trafico: bool = False, hora_salida_rutas: Optional[object] = None):
         self.origenes = origenes
         self.destinos = destinos
         self.flota = flota
@@ -32,6 +33,8 @@ class RouteOptimizer:
         self.optimization_type = optimization_type
         self.distance_method = distance_method
         self.google_api_key_directions = google_api_key_directions
+        self.considerar_trafico = considerar_trafico
+        self.hora_salida_rutas = hora_salida_rutas
         self.distance_matrix = None
         self.time_matrix = None
         self.duration_matrix = None  # Tiempos reales de Google Directions
@@ -111,8 +114,17 @@ class RouteOptimizer:
         batch_size = 25  # Google permite máximo 25 origins × 25 destinations por request
         total_requests = (n // batch_size + 1) ** 2
 
-        st.info(f"📡 Calculando distancias reales con Google Directions...")
-        st.info(f"💰 Esto realizará aproximadamente {total_requests} requests (~${total_requests * 0.005:.2f} USD)")
+        if self.considerar_trafico:
+            if self.hora_salida_rutas:
+                st.info(f"🚦 Calculando distancias Y tiempos con tráfico predictivo para {self.hora_salida_rutas.strftime('%H:%M')}...")
+            else:
+                st.info(f"🚦 Calculando distancias Y tiempos con tráfico actual (ahora)...")
+            costo_por_request = 0.010  # Con tráfico cuesta el doble
+        else:
+            st.info(f"📡 Calculando distancias reales con Google Directions...")
+            costo_por_request = 0.005
+
+        st.info(f"💰 Esto realizará aproximadamente {total_requests} requests (~${total_requests * costo_por_request:.2f} USD)")
 
         progress_bar = st.progress(0)
         total_processed = 0
@@ -125,13 +137,38 @@ class RouteOptimizer:
                     batch_origins = origins[i:min(i + batch_size, n)]
                     batch_destinations = origins[j:min(j + batch_size, n)]
 
-                    # Llamar a Directions API
-                    result = self.gmaps_client.distance_matrix(
-                        origins=batch_origins,
-                        destinations=batch_destinations,
-                        mode='driving',
-                        units='metric'
-                    )
+                    # Preparar parámetros para Directions API
+                    api_params = {
+                        'origins': batch_origins,
+                        'destinations': batch_destinations,
+                        'mode': 'driving',
+                        'units': 'metric'
+                    }
+
+                    # Agregar parámetros de tráfico si está habilitado
+                    if self.considerar_trafico:
+                        if self.hora_salida_rutas:
+                            # Tráfico predictivo: usar hora específica
+                            import datetime
+                            now = datetime.datetime.now()
+                            departure = now.replace(
+                                hour=self.hora_salida_rutas.hour,
+                                minute=self.hora_salida_rutas.minute,
+                                second=0,
+                                microsecond=0
+                            )
+                            # Si la hora ya pasó hoy, usar mañana
+                            if departure < now:
+                                departure += datetime.timedelta(days=1)
+                            api_params['departure_time'] = departure
+                            api_params['traffic_model'] = st.session_state.get('modelo_trafico', 'best_guess')
+                        else:
+                            # Tráfico actual
+                            api_params['departure_time'] = 'now'
+                            api_params['traffic_model'] = 'best_guess'
+
+                    # Llamar a Distance Matrix API
+                    result = self.gmaps_client.distance_matrix(**api_params)
 
                     # Procesar resultados
                     for bi, row in enumerate(result['rows']):
@@ -141,7 +178,12 @@ class RouteOptimizer:
 
                             if element['status'] == 'OK':
                                 distance_matrix[actual_i][actual_j] = element['distance']['value']  # metros
-                                duration_matrix[actual_i][actual_j] = element['duration']['value']  # segundos
+
+                                # Usar duration_in_traffic si está disponible (cuando se considera tráfico)
+                                if 'duration_in_traffic' in element:
+                                    duration_matrix[actual_i][actual_j] = element['duration_in_traffic']['value']  # segundos con tráfico
+                                else:
+                                    duration_matrix[actual_i][actual_j] = element['duration']['value']  # segundos sin tráfico
                             else:
                                 # Si falla, usar Haversine como fallback
                                 distance_km = self.calculate_distance(
