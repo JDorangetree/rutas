@@ -11,6 +11,7 @@ import time
 import os
 from dotenv import load_dotenv
 from security import validate_and_sanitize_file, SecurityError
+from address_validator import validate_address_dataframe, get_address_validation_summary
 
 # Cargar variables de entorno
 load_dotenv()
@@ -170,11 +171,21 @@ class DataLoader:
             if 'hora_cierre' not in df.columns:
                 df['hora_cierre'] = '23:59'
 
+            # VALIDACIÓN Y ESTANDARIZACIÓN DE DIRECCIONES
+            st.info("🔍 Validando y estandarizando direcciones...")
+            df, address_stats = validate_address_dataframe(df, tipo="orígenes")
+
+            # Mostrar resumen de validación
+            if address_stats.get('estandarizadas', 0) > 0:
+                st.success(f"✅ {address_stats['estandarizadas']} direcciones estandarizadas")
+                with st.expander("Ver detalles de estandarización"):
+                    st.text(get_address_validation_summary(address_stats))
+
             # Geocodificar direcciones sin coordenadas
             needs_geocoding = df['latitud'].isnull() | df['longitud'].isnull()
 
             if needs_geocoding.any():
-                st.info(f"Geocodificando {needs_geocoding.sum()} orígenes sin coordenadas...")
+                st.info(f"📍 Geocodificando {needs_geocoding.sum()} orígenes sin coordenadas...")
                 progress_bar = st.progress(0)
 
                 for idx, row in df[needs_geocoding].iterrows():
@@ -248,11 +259,21 @@ class DataLoader:
             if 'hora_fin' not in df.columns:
                 df['hora_fin'] = '23:59'
 
+            # VALIDACIÓN Y ESTANDARIZACIÓN DE DIRECCIONES
+            st.info("🔍 Validando y estandarizando direcciones...")
+            df, address_stats = validate_address_dataframe(df, tipo="destinos")
+
+            # Mostrar resumen de validación
+            if address_stats.get('estandarizadas', 0) > 0:
+                st.success(f"✅ {address_stats['estandarizadas']} direcciones estandarizadas")
+                with st.expander("Ver detalles de estandarización"):
+                    st.text(get_address_validation_summary(address_stats))
+
             # Geocodificar direcciones sin coordenadas
             needs_geocoding = df['latitud'].isnull() | df['longitud'].isnull()
 
             if needs_geocoding.any():
-                st.info(f"Geocodificando {needs_geocoding.sum()} destinos sin coordenadas...")
+                st.info(f"📍 Geocodificando {needs_geocoding.sum()} destinos sin coordenadas...")
                 progress_bar = st.progress(0)
                 total = needs_geocoding.sum()
 

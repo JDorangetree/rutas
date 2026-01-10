@@ -533,7 +533,8 @@ class RouteOptimizer:
                         'type': 'origen',
                         'id': origen_row_temp['origen_id'],
                         'nombre': origen_row_temp['nombre_origen'],
-                        'direccion': origen_row_temp['direccion'],
+                        'direccion': origen_row_temp.get('direccion_original', origen_row_temp['direccion']),  # Dirección original
+                        'direccion_geocodificada': origen_row_temp['direccion'],  # Dirección estandarizada
                         'ciudad': origen_row_temp['ciudad'],
                         'latitud': origen_row_temp['latitud'],
                         'longitud': origen_row_temp['longitud'],
@@ -549,7 +550,8 @@ class RouteOptimizer:
                         'type': 'destino',
                         'id': dest_row['destino_id'],
                         'nombre': dest_row['nombre_cliente'],
-                        'direccion': dest_row['direccion'],
+                        'direccion': dest_row.get('direccion_original', dest_row['direccion']),  # Dirección original
+                        'direccion_geocodificada': dest_row['direccion'],  # Dirección estandarizada
                         'ciudad': dest_row['ciudad'],
                         'latitud': dest_row['latitud'],
                         'longitud': dest_row['longitud'],
@@ -569,7 +571,8 @@ class RouteOptimizer:
                 'type': 'origen',
                 'id': origen_row_final['origen_id'],
                 'nombre': origen_row_final['nombre_origen'],
-                'direccion': origen_row_final['direccion'],
+                'direccion': origen_row_final.get('direccion_original', origen_row_final['direccion']),  # Dirección original
+                'direccion_geocodificada': origen_row_final['direccion'],  # Dirección estandarizada
                 'ciudad': origen_row_final['ciudad'],
                 'latitud': origen_row_final['latitud'],
                 'longitud': origen_row_final['longitud'],
@@ -603,6 +606,9 @@ class RouteOptimizer:
                 result['unassigned'].append({
                     'id': dest_row['destino_id'],
                     'nombre': dest_row['nombre_cliente'],
+                    'direccion': dest_row.get('direccion_original', dest_row['direccion']),
+                    'direccion_geocodificada': dest_row['direccion'],
+                    'ciudad': dest_row['ciudad'],
                     'demanda': dest_row['demanda']
                 })
 
@@ -649,6 +655,7 @@ class RouteOptimizer:
                                 'Nombre': location['nombre'],
                                 'Ciudad': location['ciudad'],
                                 'Direccion': location['direccion'],
+                                'Direccion_Geocodificada': location.get('direccion_geocodificada', location['direccion']),
                                 'Latitud': location['latitud'],
                                 'Longitud': location['longitud'],
                                 'Demanda': location['demanda']
@@ -664,6 +671,7 @@ class RouteOptimizer:
                             'Nombre': [route_info['vehicle_type'], route_info['origen_nombre']],
                             'Ciudad': [f"Carga: {route_info['load']}/{route_info['capacity']}", f"Utilización: {route_info['utilization']:.1f}%"],
                             'Direccion': [f"Distancia: {route_info['distance_km']:.2f} km", ''],
+                            'Direccion_Geocodificada': ['', ''],  # Nueva columna
                             'Latitud': ['', ''],
                             'Longitud': ['', ''],
                             'Demanda': ['', '']
@@ -682,6 +690,9 @@ class RouteOptimizer:
                         unassigned_data.append({
                             'ID': dest['id'],
                             'Nombre': dest['nombre'],
+                            'Ciudad': dest.get('ciudad', ''),
+                            'Direccion': dest.get('direccion', ''),
+                            'Direccion_Geocodificada': dest.get('direccion_geocodificada', dest.get('direccion', '')),
                             'Demanda': dest['demanda']
                         })
 
