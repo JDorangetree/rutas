@@ -21,6 +21,29 @@ from config import STREAMLIT_CONFIG, TEMPLATE_INFO, DEFAULT_CONFIG, OPTIMIZATION
 # Configurar página
 st.set_page_config(**STREAMLIT_CONFIG)
 
+# CSS personalizado para mejorar visualización de métricas
+st.markdown("""
+<style>
+    /* Mejorar el ancho de las métricas para que no se corten los números */
+    [data-testid="stMetricValue"] {
+        font-size: 1.8rem !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+    }
+
+    /* Ajustar el label de la métrica */
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
+    }
+
+    /* Mejorar espaciado de columnas */
+    [data-testid="column"] {
+        padding: 0 0.5rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Inicializar session state para data_loader temporalmente
 # Se inicializará con la API key después de cargar el sidebar
 if 'optimizer' not in st.session_state:
@@ -573,22 +596,23 @@ with tab3:
             if st.session_state.solution:
                 st.subheader("📊 Resultados de Optimización")
 
-                # Métricas principales
+                # Métricas principales con mejor formato
                 metric_col1, metric_col2, metric_col3 = st.columns(3)
 
                 with metric_col1:
+                    distancia = st.session_state.solution['total_distance']
                     st.metric(
                         "Distancia Total",
-                        f"{st.session_state.solution['total_distance']:.2f} km"
+                        f"{distancia:,.2f} km"  # Formato con separador de miles
                     )
 
                 with metric_col2:
                     num_routes = len([r for r in st.session_state.solution['routes'] if len(r['route']) > 2])
-                    st.metric("Vehículos Usados", num_routes)
+                    st.metric("Vehículos Usados", f"{num_routes}")
 
                 with metric_col3:
                     destinos_asignados = len(st.session_state.data_loader.destinos) - len(st.session_state.solution.get('unassigned', []))
-                    st.metric("Destinos Atendidos", destinos_asignados)
+                    st.metric("Destinos Atendidos", f"{destinos_asignados}")
 
                 # Advertencia si hay destinos no asignados
                 if st.session_state.solution.get('unassigned'):
