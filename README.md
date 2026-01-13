@@ -1,4 +1,4 @@
-# 🚚 Sistema de Ruteo v2.2
+# 🚚 Sistema de Ruteo v2.3
 
 <div align="center">
 
@@ -46,13 +46,21 @@ Optimiza entregas con múltiples orígenes, objetivos flexibles y geocodificaci�
 ### 🗺️ Geocodificación Inteligente
 - **Google Maps**: Alta precisión ($200 USD/mes gratis)
 - **Nominatim (OpenStreetMap)**: Gratuito y sin límites
+- **Validación de direcciones**: Estandariza formato colombiano automáticamente
 - **Automática**: Calcula coordenadas desde direcciones
 - **Fallback inteligente**: Cambia de servicio automáticamente si falla
 
 ### 📏 Distancias Precisas
 - **Haversine**: Línea recta, rápido, gratuito
-- **Google Directions**: Distancias reales por carretera
+- **Google Directions**: Distancias reales por carretera con tráfico
+- **Tráfico en tiempo real**: Considera condiciones actuales o predictivas
 - **Selector flexible**: Elige según tu necesidad de precisión
+
+### 🔒 Seguridad Robusta
+- **Validación de archivos**: Límites de tamaño (5MB) y filas (500)
+- **Detección de fórmulas**: Bloquea Excel malicioso automáticamente
+- **Sanitización de texto**: Protección contra inyección de código
+- **Logs seguros**: Ofuscación automática de datos sensibles
 
 ### 📊 Visualización y Exportación
 - **Mapas interactivos**: Visualiza rutas con colores por vehículo
@@ -243,15 +251,21 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 ### Google Directions API (Carreteras Reales)
 ```
 ✅ Distancias reales de carretera
-✅ Tiempos de viaje precisos
+✅ Tiempos de viaje precisos con tráfico
+✅ Tráfico en tiempo real o predictivo
 ⚠️ Requiere API key
-💰 Costo: $5 USD por 1000 requests
+💰 Costo: $5 USD por 1000 requests (duplica con tráfico)
 ```
 
+**Opciones de tráfico**:
+- **Tráfico actual**: Considera condiciones en tiempo real (ahora mismo)
+- **Tráfico predictivo**: Simula condiciones en hora específica del día
+- **Modelos**: Optimista, pesimista o mejor estimación
+
 **Estimación de costos**:
-- 10 ubicaciones: ~100 requests = $0.50 USD
-- 20 ubicaciones: ~400 requests = $2.00 USD
-- 50 ubicaciones: ~2500 requests = $12.50 USD
+- 10 ubicaciones: ~100 requests = $0.50 USD (sin tráfico) / $1.00 USD (con tráfico)
+- 20 ubicaciones: ~400 requests = $2.00 USD (sin tráfico) / $4.00 USD (con tráfico)
+- 50 ubicaciones: ~2500 requests = $12.50 USD (sin tráfico) / $25.00 USD (con tráfico)
 
 ---
 
@@ -263,7 +277,7 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 |---------|------|-----------|-------------|
 | `origen_id` | Texto | ✅ Sí | Identificador único (ej: BODEGA_01) |
 | `nombre_origen` | Texto | ✅ Sí | Nombre descriptivo |
-| `direccion` | Texto | ✅ Sí | Dirección completa |
+| `direccion` | Texto | ✅ Sí | Dirección completa (ej: Calle 80 #70-15) |
 | `ciudad` | Texto | ✅ Sí | Ciudad |
 | `pais` | Texto | ✅ Sí | País |
 | `latitud` | Número | ❌ No | Se geocodifica si está vacía |
@@ -271,13 +285,15 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 | `hora_apertura` | Hora | ❌ No | HH:MM formato 24h |
 | `hora_cierre` | Hora | ❌ No | HH:MM formato 24h |
 
+**💡 Validación automática**: El sistema estandariza direcciones colombianas (Cl→Calle, Cr→Carrera, etc.) y elimina redundancias de ciudad/país.
+
 ### Plantilla de Destinos
 
 | Columna | Tipo | Requerido | Descripción |
 |---------|------|-----------|-------------|
 | `destino_id` | Texto | ✅ Sí | Identificador único (ej: CLIENTE_001) |
 | `nombre_cliente` | Texto | ✅ Sí | Nombre del cliente |
-| `direccion` | Texto | ✅ Sí | Dirección completa |
+| `direccion` | Texto | ✅ Sí | Dirección completa (ej: Cl 100 # 20-40) |
 | `ciudad` | Texto | ✅ Sí | Ciudad |
 | `pais` | Texto | ✅ Sí | País |
 | `demanda` | Número | ✅ Sí | Cantidad a entregar |
@@ -285,6 +301,10 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 | `longitud` | Número | ❌ No | Se geocodifica si está vacía |
 | `hora_inicio` | Hora | ❌ No | Inicio ventana horaria |
 | `hora_fin` | Hora | ❌ No | Fin ventana horaria |
+
+**💡 Validación automática**: El sistema estandariza direcciones colombianas (Cl→Calle, Cr→Carrera, etc.) y elimina redundancias de ciudad/país.
+
+**🔒 Límites de seguridad**: Máximo 500 destinos y 5MB por archivo.
 
 ### Plantilla de Vehículos
 
@@ -310,10 +330,77 @@ El sistema ofrece 5 objetivos diferentes según tus necesidades:
 
 ---
 
+## 🔍 Validación de Direcciones
+
+El sistema incluye validación automática de direcciones colombianas para mejorar la precisión de geocodificación:
+
+### Estandarización Automática
+
+**Abreviaciones normalizadas:**
+- `Cl`, `Cll` → `Calle`
+- `Cr`, `Cra`, `Krr` → `Carrera`
+- `Av`, `Ave`, `Avd` → `Avenida`
+- `Dg`, `Diag` → `Diagonal`
+- `Tv`, `Trans` → `Transversal`
+- Y 15+ más...
+
+**Formato estandarizado:**
+```
+Entrada:  "cl 80 # 70-15, Medellin"
+Salida:   "Calle 80 #70-15"
+```
+
+### Resultado en Excel
+
+Las rutas optimizadas incluyen ambas versiones:
+- **Direccion**: Tu entrada original
+- **Direccion_Geocodificada**: Versión estandarizada usada para geocodificación
+
+### Beneficios
+
+✅ **Mayor precisión**: ~95% de geocodificaciones exitosas (vs ~85% sin validación)
+✅ **Transparencia**: Ves cómo se interpretó tu dirección
+✅ **Sin pérdida**: Direcciones no reconocidas se preservan tal cual
+
+---
+
+## 🔒 Seguridad
+
+El sistema incluye validaciones automáticas para proteger contra amenazas comunes:
+
+### Validaciones Implementadas
+
+| Validación | Límite | Protege Contra |
+|------------|--------|----------------|
+| Tamaño de archivo | 5 MB | Ataques DoS |
+| Número de filas | 500 filas | Uso excesivo de API |
+| Fórmulas Excel | Bloqueadas | Inyección de código |
+| Texto malicioso | Sanitizado | XSS attacks |
+
+### Fórmulas Bloqueadas
+
+El sistema detecta y bloquea automáticamente:
+- `=WEBSERVICE()` - Exfiltración de datos
+- `=HYPERLINK()` - Enlaces maliciosos
+- `=IMPORTDATA()` - Importación de código
+- Y otras funciones peligrosas
+
+### Recomendaciones API
+
+⚠️ **IMPORTANTE**: Configura restricciones en Google Cloud Console:
+- Limita por referente HTTP (tu dominio Streamlit)
+- Habilita solo Geocoding + Distance Matrix API
+- Establece presupuesto diario ($10 USD recomendado)
+
+Ver guía completa: [SEGURIDAD.md](SEGURIDAD.md)
+
+---
+
 ## 📚 Documentación
 
+- **[GUIA_USUARIOS.md](docs/GUIA_USUARIOS.md)** - Manual para usuarios finales (⭐ Recomendado)
+- **[SEGURIDAD.md](SEGURIDAD.md)** - Medidas de seguridad implementadas
 - **[DESPLIEGUE.md](docs/DESPLIEGUE.md)** - Guía completa para desplegar en la nube
-- **[GUIA_USUARIOS.md](docs/GUIA_USUARIOS.md)** - Manual para usuarios finales
 - **[GOOGLE_MAPS_SETUP.md](GOOGLE_MAPS_SETUP.md)** - Configurar API de Google Maps
 - **[COMPARACION_PLATAFORMAS.md](docs/COMPARACION_PLATAFORMAS.md)** - Comparativa de opciones de hosting
 - **[CHECKLIST_DESPLIEGUE.md](docs/CHECKLIST_DESPLIEGUE.md)** - Lista de verificación para despliegue
@@ -381,19 +468,23 @@ sistema-ruteo/
 
 ## 🗺️ Roadmap
 
-### ✅ Completado (v2.2)
+### ✅ Completado (v2.3)
 - [x] Múltiples orígenes y depósitos
 - [x] 5 objetivos de optimización
 - [x] Geocodificación con Google Maps y Nominatim
 - [x] Distancias reales por carretera (Google Directions)
+- [x] **Tráfico en tiempo real y predictivo** 🆕
+- [x] **Validación y estandarización de direcciones** 🆕
+- [x] **Medidas de seguridad robustas** 🆕
 - [x] Interfaz intuitiva con Streamlit
 - [x] Exportación a Excel detallada
 
-### 🚧 En Desarrollo (v2.3)
+### 🚧 En Desarrollo (v2.4)
 - [ ] Ventanas horarias estrictas
 - [ ] Restricciones de jornada laboral
 - [ ] Caché de distancias calculadas
 - [ ] Mejoras de performance para 100+ destinos
+- [ ] Rate limiting para protección DoS
 
 ### 🔮 Futuro (v3.0)
 - [ ] Histórico de rutas

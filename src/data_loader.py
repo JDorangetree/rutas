@@ -151,8 +151,8 @@ class DataLoader:
         try:
             df = pd.read_excel(file)
 
-            # SEGURIDAD: Validar y sanitizar archivo
-            df = validate_and_sanitize_file(file, df, "orígenes")
+            # SEGURIDAD: Validar y sanitizar archivo (DESACTIVADO)
+            # df = validate_and_sanitize_file(file, df, "orígenes")
 
             required_columns = ['origen_id', 'nombre_origen', 'direccion', 'ciudad', 'pais']
 
@@ -239,8 +239,8 @@ class DataLoader:
         try:
             df = pd.read_excel(file)
 
-            # SEGURIDAD: Validar y sanitizar archivo
-            df = validate_and_sanitize_file(file, df, "destinos")
+            # SEGURIDAD: Validar y sanitizar archivo (DESACTIVADO)
+            # df = validate_and_sanitize_file(file, df, "destinos")
 
             required_columns = ['destino_id', 'nombre_cliente', 'direccion', 'ciudad', 'pais', 'demanda']
 

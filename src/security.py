@@ -117,9 +117,11 @@ def detect_excel_formulas(df: pd.DataFrame, file_type: str = "archivo") -> bool:
                     f"Por seguridad, no se permiten celdas que empiecen con: = + - @"
                 )
 
-            # Detectar funciones peligrosas
+            # Detectar funciones peligrosas SOLO en celdas que parecen fórmulas
             for func in dangerous_functions:
-                if col_values.str.contains(func, case=False, regex=False, na=False).any():
+                # Buscar patrón: empieza con = y contiene la función
+                dangerous_pattern = rf'^[\s]*=.*{func}\s*\('
+                if col_values.str.contains(dangerous_pattern, case=False, regex=True, na=False).any():
                     raise SecurityError(
                         f"⚠️ Detectada función Excel peligrosa en {file_type}\n"
                         f"Columna: '{col}'\n"
