@@ -111,8 +111,10 @@ class RouteOptimizer:
         origins = [(row['latitud'], row['longitud']) for _, row in all_locations.iterrows()]
 
         # Procesar en lotes para respetar límites de API
-        batch_size = 25  # Google permite máximo 25 origins × 25 destinations por request
-        total_requests = (n // batch_size + 1) ** 2
+        # Google Distance Matrix permite máximo 100 elementos (origins × destinations)
+        # Para ser conservadores, usamos batch_size de 10
+        batch_size = 10  # 10 × 10 = 100 elementos por request (límite de Google)
+        total_requests = ((n - 1) // batch_size + 1) ** 2
 
         if self.considerar_trafico:
             if self.hora_salida_rutas:
