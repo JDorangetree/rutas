@@ -14,9 +14,21 @@ DEFAULT_CONFIG = {
     'costo_km_default': 1.5,
     'radio_tierra_km': 6371,
     'decimales_distancia': 2,
-    'color_origen': 'green',
-    'color_destino': 'red',
-    'color_ruta': ['blue', 'purple', 'orange', 'darkred', 'darkblue', 'darkgreen', 'cadetblue', 'pink', 'lightblue', 'lightgreen']
+    # Colores Logyca (Manual de marca)
+    'color_origen': '#FC4C02',      # Naranja Pantone 1655 C - Origen/Centro de distribución
+    'color_destino': '#51534A',     # Gris Pantone 418 C - Destinos
+    'color_ruta': [
+        '#FC4C02',    # Naranja principal
+        '#00A19A',    # Aguamarina (color secundario Logyca)
+        '#51534A',    # Gris corporativo
+        '#E87722',    # Naranja claro
+        '#007B7F',    # Aguamarina oscuro
+        '#8B8D8A',    # Gris medio
+        '#F4A261',    # Naranja suave
+        '#2A9D8F',    # Verde azulado
+        '#A8AAAD',    # Gris claro
+        '#E76F51'     # Coral/Naranja rojizo
+    ]
 }
 
 # Validaciones de archivos Excel - Versión 2.0

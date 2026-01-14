@@ -1,9 +1,9 @@
 [theme]
-primaryColor = "#FF4B4B"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
-textColor = "#262730"
-font = "sans serif"
+primaryColor = "#FC4C02"          # Naranja Pantone 1655 C – acento obligatorio
+backgroundColor = "#FFFFFF"       # Blanco corporativo
+secondaryBackgroundColor = "#F4F7F5"  # Blanco suave para paneles
+textColor = "#51534A"             # Gris Pantone 418 C para texto
+font = "sans serif"               # Equivalente a Museo Sans / Arial
 
 [server]
 maxUploadSize = 200

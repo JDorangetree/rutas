@@ -52,9 +52,56 @@ if 'optimizer' not in st.session_state:
 if 'solution' not in st.session_state:
     st.session_state.solution = None
 
-# Título principal
-st.title("🚚 RutaFácil")
-st.markdown("### Planificador inteligente de rutas")
+# Título principal con logo opcional
+logo_path = os.path.join(os.path.dirname(__file__), 'assets', 'images', 'logo.png')
+
+if os.path.exists(logo_path):
+    # CSS para alinear verticalmente el logo con el título
+    st.markdown("""
+    <style>
+        .header-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .header-container img {
+            max-height: 80px;
+            width: auto;
+        }
+        .header-text h1 {
+            margin: 0;
+            padding: 0;
+            font-size: 2.5rem;
+        }
+        .header-text h3 {
+            margin: 0;
+            padding: 0;
+            color: #51534A;  /* Gris Pantone 418 C */
+            font-weight: normal;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Leer imagen y convertir a base64 para HTML
+    import base64
+    with open(logo_path, "rb") as f:
+        logo_base64 = base64.b64encode(f.read()).decode()
+
+    st.markdown(f"""
+    <div class="header-container">
+        <img src="data:image/png;base64,{logo_base64}" alt="Logo">
+        <div class="header-text">
+            <h1>RutaFácil</h1>
+            <h3>Planificador inteligente de rutas</h3>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+else:
+    # Si no hay logo, mostrar título con emoji
+    st.title("🚚 RutaFácil")
+    st.markdown("### Planificador inteligente de rutas")
+
 st.divider()
 
 # Sidebar para configuración
