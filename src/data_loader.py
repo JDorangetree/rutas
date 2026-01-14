@@ -171,6 +171,10 @@ class DataLoader:
             if 'hora_cierre' not in df.columns:
                 df['hora_cierre'] = '23:59'
 
+            # Convertir latitud/longitud a numérico y manejar valores vacíos/strings
+            df['latitud'] = pd.to_numeric(df['latitud'], errors='coerce')
+            df['longitud'] = pd.to_numeric(df['longitud'], errors='coerce')
+
             # VALIDACIÓN Y ESTANDARIZACIÓN DE DIRECCIONES
             st.info("🔍 Validando y estandarizando direcciones...")
             df, address_stats = validate_address_dataframe(df, tipo="orígenes")
@@ -258,6 +262,10 @@ class DataLoader:
                 df['hora_inicio'] = '00:00'
             if 'hora_fin' not in df.columns:
                 df['hora_fin'] = '23:59'
+
+            # Convertir latitud/longitud a numérico y manejar valores vacíos/strings
+            df['latitud'] = pd.to_numeric(df['latitud'], errors='coerce')
+            df['longitud'] = pd.to_numeric(df['longitud'], errors='coerce')
 
             # VALIDACIÓN Y ESTANDARIZACIÓN DE DIRECCIONES
             st.info("🔍 Validando y estandarizando direcciones...")

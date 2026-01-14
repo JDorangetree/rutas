@@ -61,7 +61,7 @@ st.divider()
 with st.sidebar:
     st.header("⚙️ Configuración del Sistema")
 
-    # Sección de Geocodificación
+    # Sección de Geocodificación (PRIMERO)
     st.subheader("🗺️ Geocodificación")
     metodo_geocodificacion = st.selectbox(
         "Método de geocodificación:",
@@ -76,24 +76,12 @@ with st.sidebar:
     st.caption(f"✅ {GEOCODING_METHODS[metodo_geocodificacion]['ventajas']}")
     st.caption(f"⚠️ {GEOCODING_METHODS[metodo_geocodificacion]['desventajas']}")
 
-    # API key si es necesario
-    google_api_key_geocoding = None
-    if GEOCODING_METHODS[metodo_geocodificacion]['requiere_api']:
-        google_api_key_geocoding = st.text_input(
-            "Google Maps API Key (Geocoding)",
-            type="password",
-            help="Ingresa tu API key de Google Maps para geocodificación. Incluye $200 USD gratis mensuales."
-        )
-        if google_api_key_geocoding:
-            st.success("✓ API key para geocodificación ingresada")
-        else:
-            st.warning("⚠️ Requiere API key para usar Google Maps")
-    else:
+    if not GEOCODING_METHODS[metodo_geocodificacion]['requiere_api']:
         st.info("🌍 Nominatim es gratuito y no requiere configuración")
 
     st.divider()
 
-    # Sección de Método de Distancia
+    # Sección de Método de Distancia (SEGUNDO)
     st.subheader("📏 Cálculo de Distancias")
     metodo_distancia = st.selectbox(
         "Método de cálculo:",
@@ -108,86 +96,111 @@ with st.sidebar:
     st.caption(f"✅ {DISTANCE_METHODS[metodo_distancia]['ventajas']}")
     st.caption(f"⚠️ {DISTANCE_METHODS[metodo_distancia]['desventajas']}")
 
-    # API key para Google Directions si es necesario
-    google_api_key_directions = None
+    # Detectar si algún método requiere API key
+    requiere_api_geocoding = GEOCODING_METHODS[metodo_geocodificacion]['requiere_api']
+    requiere_api_distancia = DISTANCE_METHODS[metodo_distancia]['requiere_api']
+    requiere_api = requiere_api_geocoding or requiere_api_distancia
+
+    # Variables por defecto
+    google_api_key = None
     considerar_trafico = False
     hora_salida_rutas = None
 
-    if DISTANCE_METHODS[metodo_distancia]['requiere_api']:
-        google_api_key_directions = st.text_input(
-            "Google Maps API Key (Directions)",
+    # Sección de API Key (SOLO si algún método lo requiere)
+    if requiere_api:
+        st.divider()
+        st.subheader("🔑 Google Maps API")
+
+        # Mostrar qué servicios requieren la API key
+        servicios_requeridos = []
+        if requiere_api_geocoding:
+            servicios_requeridos.append("Geocodificación")
+        if requiere_api_distancia:
+            servicios_requeridos.append("Cálculo de Distancias")
+
+        st.caption(f"Requerida para: {', '.join(servicios_requeridos)}")
+
+        google_api_key = st.text_input(
+            "API Key de Google Maps",
             type="password",
-            help="Ingresa tu API key de Google Maps para calcular distancias reales por carretera."
+            help="Una sola API key para todos los servicios de Google Maps. Incluye $200 USD gratis mensuales.",
+            key="google_api_key_unified"
         )
-        if google_api_key_directions:
-            st.success("✓ API key para Directions ingresada")
 
-            # Opciones de tráfico
-            with st.expander("🚦 Opciones de Tráfico (Avanzado)"):
-                considerar_trafico = st.checkbox(
-                    "Considerar condiciones de tráfico",
-                    value=False,
-                    help="Incluye tráfico en el cálculo de tiempos. Esto duplica el costo de las solicitudes."
-                )
+        if google_api_key:
+            st.success("✓ API key configurada")
 
-                if considerar_trafico:
-                    st.info("💡 Al activar tráfico, se usarán tiempos reales de conducción en lugar de promedios")
-
-                    tipo_trafico = st.radio(
-                        "Tipo de análisis de tráfico:",
-                        options=['actual', 'predictivo'],
-                        format_func=lambda x: "Tráfico actual (ahora mismo)" if x == 'actual' else "Tráfico predictivo (hora específica)",
-                        help="Actual: condiciones de tráfico en este momento. Predictivo: estima tráfico para una hora futura."
+            # Opciones de tráfico (solo si usa Google Directions)
+            if requiere_api_distancia:
+                with st.expander("🚦 Opciones de Tráfico (Avanzado)"):
+                    considerar_trafico = st.checkbox(
+                        "Considerar condiciones de tráfico",
+                        value=False,
+                        help="Incluye tráfico en el cálculo de tiempos. Esto duplica el costo de las solicitudes."
                     )
 
-                    if tipo_trafico == 'predictivo':
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            hora_salida = st.time_input(
-                                "Hora de inicio de rutas",
-                                value=None,
-                                help="Hora aproximada cuando los vehículos saldrán. Google estimará el tráfico para esa hora."
-                            )
-                        with col2:
-                            modelo_trafico = st.selectbox(
-                                "Modelo de tráfico:",
-                                options=['best_guess', 'pessimistic', 'optimistic'],
-                                format_func=lambda x: {
-                                    'best_guess': 'Mejor estimación',
-                                    'pessimistic': 'Pesimista (peor caso)',
-                                    'optimistic': 'Optimista (mejor caso)'
-                                }[x],
-                                help="Cómo estimar el tráfico futuro"
-                            )
+                    if considerar_trafico:
+                        st.info("💡 Al activar tráfico, se usarán tiempos reales de conducción en lugar de promedios")
 
-                        if hora_salida:
-                            hora_salida_rutas = hora_salida
-                            st.session_state.modelo_trafico = modelo_trafico
-                    else:
-                        st.session_state.modelo_trafico = 'best_guess'
+                        tipo_trafico = st.radio(
+                            "Tipo de análisis de tráfico:",
+                            options=['actual', 'predictivo'],
+                            format_func=lambda x: "Tráfico actual (ahora mismo)" if x == 'actual' else "Tráfico predictivo (hora específica)",
+                            help="Actual: condiciones de tráfico en este momento. Predictivo: estima tráfico para una hora futura."
+                        )
 
-            # Calcular costo estimado
-            num_locations_estimate = 20  # Estimado por defecto
-            num_requests = num_locations_estimate ** 2
-            costo_base = num_requests * DISTANCE_METHODS['google_directions']['costo_por_request']
-            costo_con_trafico = costo_base * 2 if considerar_trafico else costo_base
+                        if tipo_trafico == 'predictivo':
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                hora_salida = st.time_input(
+                                    "Hora de inicio de rutas",
+                                    value=None,
+                                    help="Hora aproximada cuando los vehículos saldrán. Google estimará el tráfico para esa hora."
+                                )
+                            with col2:
+                                modelo_trafico = st.selectbox(
+                                    "Modelo de tráfico:",
+                                    options=['best_guess', 'pessimistic', 'optimistic'],
+                                    format_func=lambda x: {
+                                        'best_guess': 'Mejor estimación',
+                                        'pessimistic': 'Pesimista (peor caso)',
+                                        'optimistic': 'Optimista (mejor caso)'
+                                    }[x],
+                                    help="Cómo estimar el tráfico futuro"
+                                )
 
-            if considerar_trafico:
-                st.warning(f"💰 Costo estimado para ~{num_locations_estimate} ubicaciones: ${costo_con_trafico:.2f} USD (con tráfico)")
-            else:
-                st.info(f"💰 Costo estimado para ~{num_locations_estimate} ubicaciones: ${costo_base:.2f} USD")
+                            if hora_salida:
+                                hora_salida_rutas = hora_salida
+                                st.session_state.modelo_trafico = modelo_trafico
+                        else:
+                            st.session_state.modelo_trafico = 'best_guess'
+
+                # Calcular costo estimado
+                num_locations_estimate = 20  # Estimado por defecto
+                num_requests = num_locations_estimate ** 2
+                costo_base = num_requests * DISTANCE_METHODS['google_directions']['costo_por_request']
+                costo_con_trafico = costo_base * 2 if considerar_trafico else costo_base
+
+                if considerar_trafico:
+                    st.warning(f"💰 Costo estimado para ~{num_locations_estimate} ubicaciones: ${costo_con_trafico:.2f} USD (con tráfico)")
+                else:
+                    st.info(f"💰 Costo estimado para ~{num_locations_estimate} ubicaciones: ${costo_base:.2f} USD")
         else:
-            st.warning("⚠️ Requiere API key para usar distancias reales")
+            st.warning("⚠️ Ingresa tu API key para usar los servicios de Google Maps")
+
+    # Variables para compatibilidad con el resto del código
+    google_api_key_geocoding = google_api_key if requiere_api_geocoding else None
+    google_api_key_directions = google_api_key if requiere_api_distancia else None
 
     st.divider()
     st.info("💡 Las coordenadas se geocodifican automáticamente si no están presentes")
 
 # Inicializar DataLoader con la API key del usuario según el método seleccionado
 # O reinicializar si cambió la API key o el método
-current_geocoding_state = f"{metodo_geocodificacion}_{google_api_key_geocoding}"
+current_geocoding_state = f"{metodo_geocodificacion}_{google_api_key}"
 if 'data_loader' not in st.session_state or ('current_geocoding_state' in st.session_state and st.session_state.current_geocoding_state != current_geocoding_state):
     # Solo pasar API key si el método es Google Maps
-    api_key_to_use = google_api_key_geocoding if metodo_geocodificacion == 'google_maps' else None
+    api_key_to_use = google_api_key if metodo_geocodificacion == 'google_maps' else None
     st.session_state.data_loader = DataLoader(google_api_key=api_key_to_use)
     st.session_state.current_geocoding_state = current_geocoding_state
 

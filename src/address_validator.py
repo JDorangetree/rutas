@@ -159,31 +159,68 @@ def standardize_address_format(direccion: str) -> Tuple[str, list]:
     # Quitar puntos después de abreviaciones
     direccion = re.sub(r'([A-Za-z]+)\.', r'\1', direccion)
 
-    # Patrón para capturar: [TipoVia] [Numero] [Separador] [Numero-Complemento]
-    # Ejemplos: "Calle 80 # 70-15", "Cr 45 50-20", "Av 6 Norte 25 15"
-    pattern = r'^([A-Za-z]+\.?\s?[A-Za-z]*)\s+(\d+[A-Za-z]?)\s*([#\-]?)\s*(\d+[A-Za-z]?)?[\s\-]*(\d+[A-Za-z]?)?(.*)$'
+    # Patrón 1: Direcciones con nombre de vía compuesto (Ej: "Avenida Ciudad de Cali # 24-30", "Avenida 1 Mayo # 41-50")
+    pattern_nombre = r'^(Avenida|Av|Calle|Carrera|Diagonal|Transversal)\s+([A-Za-z0-9\s]+?)\s*([#])\s*(\d+[A-Za-z]?)[\s\-]*(\d+[A-Za-z]?)?(.*)$'
+    match_nombre = re.match(pattern_nombre, direccion, re.IGNORECASE)
 
-    match = re.match(pattern, direccion)
+    if match_nombre:
+        via_type = match_nombre.group(1).strip()
+        nombre_via = match_nombre.group(2).strip()
+        separador = match_nombre.group(3)
+        num_secundario = match_nombre.group(4) or ''
+        complemento = match_nombre.group(5) or ''
+        resto = match_nombre.group(6).strip() if match_nombre.group(6) else ''
+
+        via_normalizada = normalize_via_type(via_type)
+
+        if num_secundario:
+            if complemento:
+                direccion_std = f"{via_normalizada} {nombre_via} #{num_secundario}-{complemento}"
+            else:
+                direccion_std = f"{via_normalizada} {nombre_via} #{num_secundario}"
+        else:
+            direccion_std = f"{via_normalizada} {nombre_via}"
+            warnings.append(f"Dirección sin número secundario: '{direccion_original}'")
+
+        if resto:
+            resto_clean = resto.strip(',-#').strip()
+            if resto_clean and len(resto_clean) < 30:
+                direccion_std = f"{direccion_std} {resto_clean}"
+
+        return direccion_std, warnings
+
+    # Patrón 2: Direcciones estándar con sufijo opcional (Sur/Norte/Este/Oeste)
+    # Ejemplos: "Calle 80 # 70-15", "Calle 63 Sur # 18-30", "Carrera 3 Este # 10-45"
+    pattern = r'^([A-Za-z]+\.?\s?[A-Za-z]*)\s+(\d+[A-Za-z]?)\s*(Sur|Norte|Este|Oeste|Bis|[A-Z])?\s*([#\-])\s*(\d+[A-Za-z]?)[\s\-]*(\d+[A-Za-z]?)?(.*)$'
+
+    match = re.match(pattern, direccion, re.IGNORECASE)
 
     if match:
         via_type = match.group(1).strip()
         num_principal = match.group(2).strip()
-        separador = match.group(3) or '#'
-        num_secundario = match.group(4) or ''
-        complemento = match.group(5) or ''
-        resto = match.group(6).strip()
+        sufijo_direccion = match.group(3) or ''  # Sur, Norte, Este, Oeste, Bis, etc.
+        separador = match.group(4) or '#'
+        num_secundario = match.group(5) or ''
+        complemento = match.group(6) or ''
+        resto = match.group(7).strip() if match.group(7) else ''
 
         # Normalizar tipo de vía
         via_normalizada = normalize_via_type(via_type)
 
+        # Construir número principal con sufijo si existe
+        if sufijo_direccion:
+            num_principal_completo = f"{num_principal} {sufijo_direccion.capitalize()}"
+        else:
+            num_principal_completo = num_principal
+
         # Construir dirección estandarizada
         if num_secundario:
             if complemento:
-                direccion_std = f"{via_normalizada} {num_principal} #{num_secundario}-{complemento}"
+                direccion_std = f"{via_normalizada} {num_principal_completo} #{num_secundario}-{complemento}"
             else:
-                direccion_std = f"{via_normalizada} {num_principal} #{num_secundario}"
+                direccion_std = f"{via_normalizada} {num_principal_completo} #{num_secundario}"
         else:
-            direccion_std = f"{via_normalizada} {num_principal}"
+            direccion_std = f"{via_normalizada} {num_principal_completo}"
             warnings.append(f"Dirección sin número secundario: '{direccion_original}'")
 
         # Agregar resto si hay información adicional (Ej: "Sur", "Norte", "Este", "Oeste", "Bis", etc.)
@@ -288,10 +325,20 @@ def validate_address_dataframe(df: pd.DataFrame, tipo: str = "destinos") -> Tupl
         df_clean.at[idx, 'direccion_original'] = str(direccion_original)
 
         # Registrar estadísticas
-        if direccion_std != direccion_original:
+        # Normalizar para comparación: eliminar espacios extra y alrededor de #
+        def normalizar_para_comparar(s):
+            s = re.sub(r'\s+', ' ', str(s).strip())  # Espacios múltiples a uno
+            s = re.sub(r'\s*#\s*', '#', s)  # Sin espacios alrededor de #
+            return s.lower()
+
+        orig_normalizada = normalizar_para_comparar(direccion_original)
+        std_normalizada = normalizar_para_comparar(direccion_std)
+
+        # Solo contar como cambio si hay diferencia significativa (no solo espacios)
+        if orig_normalizada != std_normalizada:
             stats['estandarizadas'] += 1
 
-            # Guardar algunos ejemplos
+            # Guardar algunos ejemplos de cambios significativos
             if len(stats['ejemplos_cambios']) < 5:
                 stats['ejemplos_cambios'].append({
                     'fila': idx + 2,  # +2 porque Excel empieza en 1 y tiene header
